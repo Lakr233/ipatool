@@ -3,7 +3,6 @@ module github.com/majd/ipatool/v2
 go 1.19
 
 require (
-	github.com/99designs/keyring v1.2.1
 	github.com/avast/retry-go v3.0.0+incompatible
 	github.com/juju/persistent-cookiejar v1.0.0
 	github.com/onsi/ginkgo/v2 v2.5.0
@@ -19,7 +18,6 @@ require (
 )
 
 require (
-	github.com/99designs/go-keychain v0.0.0-20191008050251-8e49817e8af4 // indirect
 	github.com/danieljoos/wincred v1.1.2 // indirect
 	github.com/dvsekhvalnov/jose2go v1.6.0 // indirect
 	github.com/go-logr/logr v1.2.3 // indirect

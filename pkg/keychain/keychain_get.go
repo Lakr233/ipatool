@@ -2,13 +2,20 @@ package keychain
 
 import (
 	"fmt"
+	"io/ioutil"
+	"os"
 )
 
-func (k *keychain) Get(key string) ([]byte, error) {
-	item, err := k.keyring.Get(key)
+func (s *simplestore) Get(key string) ([]byte, error) {
+	filePath := s.getFilePath(key)
+
+	data, err := ioutil.ReadFile(filePath)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get item: %w", err)
+		if os.IsNotExist(err) {
+			return nil, fmt.Errorf("key not found: %s", key)
+		}
+		return nil, fmt.Errorf("failed to read key: %w", err)
 	}
 
-	return item.Data, nil
+	return data, nil
 }

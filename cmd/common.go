@@ -1,14 +1,11 @@
 package cmd
 
 import (
-	"errors"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
-	"strings"
 
-	"github.com/99designs/keyring"
 	cookiejar "github.com/juju/persistent-cookiejar"
 	"github.com/majd/ipatool/v2/pkg/appstore"
 	"github.com/majd/ipatool/v2/pkg/http"
@@ -19,7 +16,6 @@ import (
 	"github.com/majd/ipatool/v2/pkg/util/operatingsystem"
 	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
-	"golang.org/x/term"
 )
 
 var dependencies = Dependencies{}
@@ -61,39 +57,22 @@ func newCookieJar(machine machine.Machine) http.CookieJar {
 
 // newKeychain returns a new keychain instance.
 func newKeychain(machine machine.Machine, logger log.Logger, interactive bool) keychain.Keychain {
-	ring := util.Must(keyring.Open(keyring.Config{
-		AllowedBackends: []keyring.BackendType{
-			keyring.KeychainBackend,
-			keyring.SecretServiceBackend,
-			keyring.FileBackend,
-		},
-		ServiceName: KeychainServiceName,
-		FileDir:     filepath.Join(machine.HomeDirectory(), ConfigDirectoryName),
-		FilePasswordFunc: func(s string) (string, error) {
-			if keychainPassphrase == "" && !interactive {
-				return "", errors.New("keychain passphrase is required when not running in interactive mode; use the \"--keychain-passphrase\" flag")
-			}
+	secretDir := filepath.Join(machine.HomeDirectory(), ".secret")
 
-			if keychainPassphrase != "" {
-				return keychainPassphrase, nil
-			}
+	// Ensure the secret directory exists
+	if err := os.MkdirAll(secretDir, 0700); err != nil {
+		logger.Error().Err(err).Msg("Failed to create secret directory")
+		os.Exit(1)
+	}
 
-			path := strings.Split(s, " unlock ")[1]
-			logger.Log().Msgf("enter passphrase to unlock %s (this is separate from your Apple ID password): ", path)
-			bytes, err := term.ReadPassword(int(os.Stdin.Fd()))
-			if err != nil {
-				return "", fmt.Errorf("failed to read password: %w", err)
-			}
+	// 传入bundleID，这里使用应用的名称或包名作为bundleID
+	// 例如：com.example.ipatool
+	bundleID := "com.github.majd.ipatool" // 可以从配置或命令行参数中获取
 
-			password := string(bytes)
-			password = strings.Trim(password, "\n")
-			password = strings.Trim(password, "\r")
-
-			return password, nil
-		},
-	}))
-
-	return keychain.New(keychain.Args{Keyring: ring})
+	return keychain.New(keychain.Args{
+		BaseDir:  secretDir,
+		BundleID: bundleID,
+	})
 }
 
 // initWithCommand initializes the dependencies of the command.
