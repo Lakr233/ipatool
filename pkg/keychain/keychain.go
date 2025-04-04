@@ -18,7 +18,7 @@ type simplestore struct {
 
 type Args struct {
 	BaseDir  string
-	BundleID string // 添加BundleID字段
+	BundleID string
 }
 
 func New(args Args) Keychain {
@@ -34,12 +34,10 @@ func (s *simplestore) ensureDirectoryExists() error {
 }
 
 func (s *simplestore) getFilePath(key string) string {
-	// 使用传入的bundleID
 	if s.bundleID != "" {
 		return filepath.Join(s.baseDir, s.bundleID, key)
 	}
 
-	// 兼容旧的解析方式，以防bundleID未设置
 	parts := filepath.SplitList(key)
 	if len(parts) < 2 {
 		return filepath.Join(s.baseDir, "default", key)
